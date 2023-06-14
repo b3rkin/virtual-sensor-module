@@ -65,35 +65,35 @@ int main()
     std::getline(inputFile, line); // First line is the header.
     while (std::getline(inputFile, line))
     {
-
         // Step 1: Parse the line and extract the data.
         parseInputCSVLine(line, point);
         // Step 2: Insert the new tracking point into the virtual sensor.
         IMU.sampleObjectData(point);
-        // Step 3: If new sensor data is available, update the output.
-        if(IMU.isSensorDataAvailable()){
+        // Step 3: If new sensor data is not available try calculating a new one.
+        if(!IMU.isSensorDataAvailable()){ 
 
-            IMU.getSensorData(outputSensorData);
-
-            // Use the output as you wish. (Currently written to the output file.)
-            // Create a new line to be written to the output file
-            std::string outputLine = std::to_string(outputSensorData.accX)  + "," 
-                                   + std::to_string(outputSensorData.accY)  + "," 
-                                   + std::to_string(outputSensorData.accZ)  + "," 
-                                   + std::to_string(outputSensorData.gyroX) + "," 
-                                   + std::to_string(outputSensorData.gyroY) + "," 
-                                   + std::to_string(outputSensorData.gyroZ) + "," 
-                                   + std::to_string(outputSensorData.timestamp) + "\n";
-
-            // Write the line to the output file
-            outputFile << outputLine;
-
-
-
+            if(!IMU.calculateSensorData()){ // If the sensor data can not be calculated then continue to sample a new tracking point.
+                continue;
+            } 
+            else{IMU.getSensorData(outputSensorData);}
         }
-        
+        else{
+            IMU.getSensorData(outputSensorData);
+        }
 
+        // Step 4: Do something with the sensor data.
+        // Currently written to the output file.
+        // Create a new line to be written to the output file
+        std::string outputLine = std::to_string(outputSensorData.accX)  + "," 
+                               + std::to_string(outputSensorData.accY)  + "," 
+                               + std::to_string(outputSensorData.accZ)  + "," 
+                               + std::to_string(outputSensorData.gyroX) + "," 
+                               + std::to_string(outputSensorData.gyroY) + "," 
+                               + std::to_string(outputSensorData.gyroZ) + "," 
+                               + std::to_string(outputSensorData.timestamp) + "\n";
 
+        // Write the line to the output file
+        outputFile << outputLine;
     }
 
 
