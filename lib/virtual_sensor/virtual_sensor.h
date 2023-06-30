@@ -2,6 +2,10 @@
 #include <cmath>
 
 #define GRAVITY (9.81) // m/s^2
+#define PI (3.14159265359)
+#define RAD2DEG (180.0/PI)
+#define DEG2RAD (PI/180.0)
+#define MAX_ABS_ANG_VEL (250) // dps | The maximum angular velocity of the object in degrees per second. 
 
 struct TrackingPoint
 {
@@ -21,17 +25,21 @@ class VirtualIMU
 {
 
 public:
+
     void sampleObjectData(TrackingPoint newPoint);
     bool calculateLinearAcceleration(float acceleration[3]);
-    void calculateVelocityFromPosition(TrackingPoint &newPoint, TrackingPoint &oldPoint);
     bool isSensorDataAvailable();
-    void addGravityVectorToAcc(float &accX, float &accY, float &accZ);
     bool getSensorData(SensorOutput &output);
     bool calculateSensorData();
+    bool calculateAngularVelocity(float angVel[3]);
+    bool updateRotationMatrix();
+    void calculateAccelerometerValues(float acceleration[3], float accelerometer[3]);
 
 private:
+
     std::vector<TrackingPoint> trackingQ;
     std::vector<SensorOutput> sensorQ;
+
     float rotationMatrix[3][3];
 
     void updateRotationMatrix(float roll, float pitch, float yaw);

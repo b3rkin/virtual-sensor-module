@@ -37,14 +37,13 @@ int main()
 
     // Open the input file.
     std::ifstream inputFile(inputFilePath);
-
     if (!inputFile.is_open())
     {
         std::cerr << "Failed to open input file." << std::endl;
         return 1;
     }
 
-    // Open the output file
+    // Open the output file.
     std::ofstream outputFile(outputFilePath);
     if (!outputFile.is_open())
     {
@@ -58,12 +57,9 @@ int main()
     SensorOutput outputSensorData;
     VirtualIMU IMU;
 
-    float rotationMatrix[3][3];
-    bool lineFlag = true;
-
     // Read and process the lines from the input file
     std::getline(inputFile, line); // First line is the header.
-    while (std::getline(inputFile, line))
+    while (std::getline(inputFile, line)) // This line can/should be changed to any input method in further iterations.
     {
         // Step 1: Parse the line and extract the data.
         parseInputCSVLine(line, point);
@@ -72,9 +68,9 @@ int main()
         // Step 3: If new sensor data is not available try calculating a new one.
         if(!IMU.isSensorDataAvailable()){ 
 
-            if(!IMU.calculateSensorData()){ // If the sensor data can not be calculated then continue to sample a new tracking point.
+            if(!IMU.calculateSensorData()){ // If the sensor data cannot be calculated then continue to sample a new tracking point.
                 continue;
-            } 
+            }
             else{IMU.getSensorData(outputSensorData);}
         }
         else{
@@ -95,7 +91,6 @@ int main()
         // Write the line to the output file
         outputFile << outputLine;
     }
-
 
     // Close the input and output files
     inputFile.close();
