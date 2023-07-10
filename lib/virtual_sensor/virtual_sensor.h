@@ -23,24 +23,23 @@ struct SensorOutput
 
 class VirtualIMU
 {
+    public:
+    
+        VirtualIMU();
+        void sampleObjectData(TrackingPoint newPoint);
+        bool isSensorDataAvailable();
+        bool getSensorData(SensorOutput &output);
+        bool calculateSensorData();
 
-public:
+    private:
 
-    void sampleObjectData(TrackingPoint newPoint);
-    bool calculateLinearAcceleration(float acceleration[3]);
-    bool isSensorDataAvailable();
-    bool getSensorData(SensorOutput &output);
-    bool calculateSensorData();
-    bool calculateAngularVelocity(float angVel[3]);
-    bool updateRotationMatrix();
-    void calculateAccelerometerValues(float acceleration[3], float accelerometer[3]);
+        std::vector<TrackingPoint> trackingQ;
+        std::vector<SensorOutput> sensorQ;
 
-private:
+        float rotationMatrix[3][3];
 
-    std::vector<TrackingPoint> trackingQ;
-    std::vector<SensorOutput> sensorQ;
-
-    float rotationMatrix[3][3];
-
-    void updateRotationMatrix(float roll, float pitch, float yaw);
+        bool calculateAngularVelocity(float angVel[3]);
+        bool updateRotationMatrix();
+        bool calculateLinearAcceleration(float acceleration[3]);
+        void calculateAccelerometerValues(float acceleration[3], float accelerometer[3]);
 };

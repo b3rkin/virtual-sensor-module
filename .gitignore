@@ -1,2 +1,4 @@
 /.vscode
-/virtual_sensor_program
+/virtual_sensor_program_udp
+/virtual_sensor_program_csv
+/Complementary/Debug_Programs/receiver

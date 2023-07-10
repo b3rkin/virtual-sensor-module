@@ -4,6 +4,73 @@
 
 
 
+VirtualIMU::VirtualIMU(){
+    // Initialize the rotation matrix as an identity matrix.
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            if(i==j){rotationMatrix[i][j] = 1;}
+            else{rotationMatrix[i][j] = 0;}
+        }
+    }
+}
+
+
+void VirtualIMU::sampleObjectData(TrackingPoint newPoint){
+    trackingQ.push_back(newPoint);
+}
+
+
+bool VirtualIMU::isSensorDataAvailable(){
+    return !sensorQ.empty();
+}
+
+
+bool VirtualIMU::getSensorData(SensorOutput& output){
+    if(sensorQ.empty()){return false;}
+    output = sensorQ[0];
+    sensorQ.erase(sensorQ.begin());
+    return true;
+}
+
+
+bool VirtualIMU::calculateSensorData(){
+
+    // This calculation can be done only if there are at least three tracking points.
+    if(trackingQ.size() < 3){return false;}
+
+    // Step 1: Calculate angular velocity.
+    float angVel[3] = {0,0,0};
+    if(!calculateAngularVelocity(angVel)){return false;}
+
+    // Step 2: Update the rotation matrix to be able to get rotation. (With the orientation at tracking point 2.)
+    if(!updateRotationMatrix()){return false;}
+
+    // Step 3: Calculate linear acceleration.
+    float acceleration[3];
+    if(!calculateLinearAcceleration(acceleration)){return false;};
+
+    // Step 4: Adjust the linear acceleration to actual accelerometer values.
+    float accelerometer[3] = {0,0,0};
+    calculateAccelerometerValues(acceleration, accelerometer);
+
+    // Step 5: Insert calculated sensor data into the sensor data FIFO.
+    SensorOutput sensorData;
+    sensorData.accX = accelerometer[0];
+    sensorData.accY = accelerometer[1];
+    sensorData.accZ = accelerometer[2];
+    sensorData.gyroX = angVel[0];
+    sensorData.gyroY = angVel[1];
+    sensorData.gyroZ = angVel[2];
+    sensorData.timestamp = (trackingQ[0].timestamp + trackingQ[1].timestamp)/2;
+    sensorQ.push_back(sensorData);
+
+    // Step 6: Remove the oldest tracking point for new calculations.
+    trackingQ.erase(trackingQ.begin());
+
+    return true;
+}
+
+
 bool VirtualIMU::calculateLinearAcceleration(float acceleration[3]){
 
     // This calculation can be done only if there are at least three tracking points.
@@ -41,7 +108,7 @@ bool VirtualIMU::calculateLinearAcceleration(float acceleration[3]){
     return true;
 }
 
-// Convert Euler angles to rotation matrix
+
 bool VirtualIMU::updateRotationMatrix() {
 
     if(trackingQ.size() < 2){return false;}
@@ -70,20 +137,6 @@ bool VirtualIMU::updateRotationMatrix() {
     return true;
 }
 
-void VirtualIMU::sampleObjectData(TrackingPoint newPoint){
-    trackingQ.push_back(newPoint);
-}
-
-bool VirtualIMU::getSensorData(SensorOutput& output){
-    if(sensorQ.empty()){return false;}
-    output = sensorQ[0];
-    sensorQ.erase(sensorQ.begin());
-    return true;
-}
-
-bool VirtualIMU::isSensorDataAvailable(){
-    return !sensorQ.empty();
-}
 
 bool VirtualIMU::calculateAngularVelocity(float angVel[3]){
 
@@ -120,6 +173,7 @@ bool VirtualIMU::calculateAngularVelocity(float angVel[3]){
     return true;
 }
 
+
 void VirtualIMU::calculateAccelerometerValues(float acceleration[3], float accelerometer[3]){
 
     // Rotate the linear acceleration values to the body frame of the sensor to get actual accelerometer values.
@@ -148,44 +202,6 @@ void VirtualIMU::calculateAccelerometerValues(float acceleration[3], float accel
 
 
 }
-
-bool VirtualIMU::calculateSensorData(){
-
-    // This calculation can be done only if there are at least three tracking points.
-    if(trackingQ.size() < 3){return false;}
-
-    // Step 1: Calculate angular velocity.
-    float angVel[3];
-    if(!calculateAngularVelocity(angVel)){return false;}
-
-    // Step 2: Update the rotation matrix to be able to get rotation. (With the orientation at tracking point 2.)
-    if(!updateRotationMatrix()){return false;}
-
-    // Step 3: Calculate linear acceleration.
-    float acceleration[3];
-    if(!calculateLinearAcceleration(acceleration)){return false;};
-
-    // Step 4: Adjust the linear acceleration to actual accelerometer values.
-    float accelerometer[3] = {0,0,0};
-    calculateAccelerometerValues(acceleration, accelerometer);
-
-    // Step 5: Insert calculated sensor data into the sensor data FIFO.
-    SensorOutput sensorData;
-    sensorData.accX = accelerometer[0];
-    sensorData.accY = accelerometer[1];
-    sensorData.accZ = accelerometer[2];
-    sensorData.gyroX = angVel[0];
-    sensorData.gyroY = angVel[1];
-    sensorData.gyroZ = angVel[2];
-    sensorData.timestamp = (trackingQ[0].timestamp + trackingQ[1].timestamp)/2;
-    sensorQ.push_back(sensorData);
-
-    // Step 6: Remove the oldest tracking point for new calculations.
-    trackingQ.erase(trackingQ.begin());
-
-    return true;
-}
-
 
 
 
