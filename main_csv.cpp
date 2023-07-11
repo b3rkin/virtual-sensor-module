@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include "lib/virtual_sensor/virtual_sensor.h"
-#include "lib/util/util.h"
+
 
 void parseInputCSVLine(const std::string &line, TrackingPoint &data)
 {
@@ -22,9 +22,9 @@ void parseInputCSVLine(const std::string &line, TrackingPoint &data)
     data.pX = std::stof(tokens[0]);
     data.pY = std::stof(tokens[1]);
     data.pZ = std::stof(tokens[2]);
-    data.roll = std::stof(tokens[3]);
-    data.pitch = std::stof(tokens[4]);
-    data.yaw = std::stof(tokens[5]);
+    data.rotX = std::stof(tokens[3]);
+    data.rotY = std::stof(tokens[4]);
+    data.rotZ = std::stof(tokens[5]);
     data.timestamp = std::stof(tokens[6]);
 }
 

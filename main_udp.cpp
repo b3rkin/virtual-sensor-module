@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "lib/virtual_sensor/virtual_sensor.h"
-#include "lib/util/util.h"
+
 
 #define RECEIVE_PORT 1234
 #define SEND_PORT 5678
@@ -65,6 +65,8 @@ int main() {
         // Parse the received message
         std::memcpy(&point, receiveBuffer, sizeof(TrackingPoint));
 
+        // std::cout<<sizeof(TrackingPoint)<<std::endl;
+
 
         // Calculate sample period. ()
         float samplePeriod = (float)(point.timestamp - lastTimeStamp)/(float)1000000;
@@ -72,15 +74,18 @@ int main() {
 
         // Perform calculations with the data
         std::cout << "Received UDP packet:" << std::endl;
-        std::cout << "rotX: " << point.roll << std::endl;
-        std::cout << "rotY: " << point.pitch << std::endl;
-        std::cout << "rotZ: " << point.yaw << std::endl;
+        std::cout << "rotX: " << point.rotX << std::endl;
+        std::cout << "rotY: " << point.rotY << std::endl;
+        std::cout << "rotZ: " << point.rotZ << std::endl;
         std::cout << "pX: " << point.pX << std::endl;
         std::cout << "pY: " << point.pY << std::endl;
         std::cout << "pZ: " << point.pZ << std::endl;
         std::cout << "Timestamp: " << point.timestamp << std::endl;
         std::cout << "deltaTime: " << samplePeriod << std::endl;
 
+        std::cout << "angVX: " << point.angvX << std::endl;
+        std::cout << "angVY: " << point.angvY << std::endl;
+        std::cout << "angVZ: " << point.angvZ << std::endl;
         // Sensor processing Starts here:
         // Step 1: Insert new tracking point into the virtual sensor.
         IMU.sampleObjectData(point);

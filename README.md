@@ -40,13 +40,13 @@ The program expects tracking points over the UDP socket it creates. Then it turn
 | timestamp           | micro seconds (μs)            |
 
 ## Used Reference Frames and Coordinate Systems
-This virtual sensor module (VSM) uses the right hand coordinate system where it assumes the axes and the rotations around the axes as is given in the figure below. At initialization the VSM assumes that its axes are perfectly alligned with the axes of the reference frame it uses (This means that the initial position and orientation of the sensor is taken as a global reference frame). The +Z direction of the global reference frame should always be assumed to be pointing upwards (to the opposite from the gravity vector.). 
+This virtual sensor module (VSM) uses the right hand coordinate system where it assumes the axes and the rotations around the axes as is given in the figure below. At initialization the VSM assumes that its axes are perfectly alligned with the axes of the reference frame it uses (This means that the initial position and orientation of the sensor is taken as a global reference frame). The +Z direction of the global reference frame should always be assumed to be pointing upwards (to the opposite from the gravity vector.). The rotation values rotX, rotY, rotZ are always asumed to follow the ZYX rotation convention.
 
 ![Virtual sensor module axes](images/frame.png)
 
 ## TO-DO
  - [ ] Add the conversion from tracking points (position[pX,pY,pZ] + orientation[rotX, rotY, rotZ]) to sensor values(accelerometer[accX, accY, accZ] + gyroscope[gyroX, gyroY, gyroZ]).
-    - [x] Calculating the angular velocity from integration of rotX, rotY, rotZ values. 
+    - [ ] Calculating the angular velocity from integration of rotX, rotY, rotZ values. 
     - [x] Calculation of acceleration in the x,y,z directions using double derivation of position values.
     - [x] Conversion from linear acceleration calculation to accX, accY, accZ with the rotation matrix.
     - [x] Conversion of the gravity vector to proper accX, accY, accZ with the rotation matrix.
@@ -59,3 +59,4 @@ This virtual sensor module (VSM) uses the right hand coordinate system where it 
  - [x] Add taking input tracking points from an internal web socket over UDP.
 
  ## References
+1. Angular velocity from Euler Angles: https://phys.libretexts.org/Bookshelves/Classical_Mechanics/Classical_Mechanics_(Tatum)/04%3A_Rigid_Body_Rotation/4.02%3A_Angular_Velocity_and_Eulerian_Angles
