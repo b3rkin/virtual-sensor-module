@@ -86,21 +86,34 @@ bool VirtualIMU::calculateLinearAcceleration(float acceleration[3]){
     // Calculate the time deltas and turn the into seconds.
     float deltaT1 = (float) (point_t1.timestamp - point_t0.timestamp)/1000000;
     float deltaT2 = (float) (point_t2.timestamp - point_t1.timestamp)/1000000;
+    float newDeltaT = (deltaT1 + deltaT2) / 2;
 
     // Calculate the linear velocities v1 and v2.
-    float velocity1[3] = {0,0,0}; // vX, vY, vZ
-    velocity1[0] = (point_t1.pX - point_t0.pX) / deltaT1;
-    velocity1[1] = (point_t1.pY - point_t0.pY) / deltaT1;
-    velocity1[2] = (point_t1.pZ - point_t0.pZ) / deltaT1;
-    float velocity2[3] = {0,0,0}; // vX, vY, vZ
-    velocity2[0] = (point_t2.pX - point_t1.pX) / deltaT2;
-    velocity2[1] = (point_t2.pY - point_t1.pY) / deltaT2;
-    velocity2[2] = (point_t2.pZ - point_t1.pZ) / deltaT2;
+    // float velocity1[3] = {0,0,0}; // vX, vY, vZ
+    // velocity1[0] = (point_t1.pX - point_t0.pX) / deltaT1;
+    // velocity1[1] = (point_t1.pY - point_t0.pY) / deltaT1;
+    // velocity1[2] = (point_t1.pZ - point_t0.pZ) / deltaT1;
+    // float velocity2[3] = {0,0,0}; // vX, vY, vZ
+    // velocity2[0] = (point_t2.pX - point_t1.pX) / deltaT2;
+    // velocity2[1] = (point_t2.pY - point_t1.pY) / deltaT2;
+    // velocity2[2] = (point_t2.pZ - point_t1.pZ) / deltaT2;
+
+
+    // std::cout<< velocity1[0]<<std::endl;
+    // std::cout<< velocity2[0]<<std::endl;
+
 
     // Calculate the linear acceleration.
-    acceleration[0] = (velocity2[0] - velocity1[0]) / ((deltaT1 + deltaT2) / 2);
-    acceleration[1] = (velocity2[1] - velocity1[1]) / ((deltaT1 + deltaT2) / 2);
-    acceleration[2] = (velocity2[2] - velocity1[2]) / ((deltaT1 + deltaT2) / 2);    
+    // acceleration[0] = (velocity2[0] - velocity1[0]) / newDeltaT;
+    // acceleration[1] = (velocity2[1] - velocity1[1]) / newDeltaT;
+    // acceleration[2] = (velocity2[2] - velocity1[2]) / newDeltaT;    
+
+    acceleration[0] = (point_t1.velX - point_t0.velX ) / newDeltaT;
+    acceleration[1] = (point_t1.velY - point_t0.velY ) / newDeltaT;
+    acceleration[2] = (point_t1.velZ - point_t0.velZ ) / newDeltaT;   
+
+    // std::cout<< acceleration[0] <<std::endl;
+    // std::cout<< newDeltaT <<std::endl;
 
     acceleration[0] /= GRAVITY;
     acceleration[1] /= GRAVITY;
@@ -115,7 +128,7 @@ bool VirtualIMU::updateRotationMatrix() {
     if(trackingQ.size() < 2){return false;}
 
     float Rx[3][3], Ry[3][3], Rz[3][3];  
-
+    float RxT[3][3], RyT[3][3], RzT[3][3];  
 
     float roll  = trackingQ[1].rotX*DEG2RAD;
     float pitch = trackingQ[1].rotY*DEG2RAD;
@@ -128,53 +141,83 @@ bool VirtualIMU::updateRotationMatrix() {
     float cosYaw   = cos(yaw);
     float sinYaw   = sin(yaw);
 
-    Rx[0][0] = 1;
-    Rx[0][1] = 0;
-    Rx[0][2] = 0;
-    Rx[1][0] = 0;
-    Rx[1][1] = cosRoll;
-    Rx[1][2] = -sinRoll;
-    Rx[2][0] = 0;
-    Rx[2][1] = sinRoll;
-    Rx[2][2] = cosRoll;
+    // Transposes of the rotation matrices.
+    RxT[0][0] = 1;
+    RxT[0][1] = 0;
+    RxT[0][2] = 0;
+    RxT[1][0] = 0;
+    RxT[1][1] = cosRoll;
+    RxT[1][2] = sinRoll;
+    RxT[2][0] = 0;
+    RxT[2][1] = -sinRoll;
+    RxT[2][2] = cosRoll;
 
-    Ry[0][0] = cosPitch;
-    Ry[0][1] = 0;
-    Ry[0][2] = sinPitch;
-    Ry[1][0] = 0;
-    Ry[1][1] = 1;
-    Ry[1][2] = 0;
-    Ry[2][0] = -sinPitch;
-    Ry[2][1] = 0;
-    Ry[2][2] = cosPitch;
+    RyT[0][0] = cosPitch;
+    RyT[0][1] = 0;
+    RyT[0][2] = -sinPitch;
+    RyT[1][0] = 0;
+    RyT[1][1] = 1;
+    RyT[1][2] = 0;
+    RyT[2][0] = sinPitch;
+    RyT[2][1] = 0;
+    RyT[2][2] = cosPitch;
 
-    Rz[0][0] = cosYaw;
-    Rz[0][1] = -sinYaw;
-    Rz[0][2] = 0;
-    Rz[1][0] = sinYaw;
-    Rz[1][1] = cosYaw;
-    Rz[1][2] = 0;   
-    Rz[2][0] = 0;
-    Rz[2][1] = 0;
-    Rz[2][2] = 1;
+    RzT[0][0] = cosYaw;
+    RzT[0][1] = sinYaw;
+    RzT[0][2] = 0;
+    RzT[1][0] = -sinYaw;
+    RzT[1][1] = cosYaw;
+    RzT[1][2] = 0;   
+    RzT[2][0] = 0;
+    RzT[2][1] = 0;
+    RzT[2][2] = 1;
+
+
+    // The rotation matrices
+    // Rx[0][0] = 1;
+    // Rx[0][1] = 0;
+    // Rx[0][2] = 0;
+    // Rx[1][0] = 0;
+    // Rx[1][1] = cosRoll;
+    // Rx[1][2] = -sinRoll;
+    // Rx[2][0] = 0;
+    // Rx[2][1] = sinRoll;
+    // Rx[2][2] = cosRoll;
+
+    // Ry[0][0] = cosPitch;
+    // Ry[0][1] = 0;
+    // Ry[0][2] = sinPitch;
+    // Ry[1][0] = 0;
+    // Ry[1][1] = 1;
+    // Ry[1][2] = 0;
+    // Ry[2][0] = -sinPitch;
+    // Ry[2][1] = 0;
+    // Ry[2][2] = cosPitch;
+
+    // Rz[0][0] = cosYaw;
+    // Rz[0][1] = -sinYaw;
+    // Rz[0][2] = 0;
+    // Rz[1][0] = sinYaw;
+    // Rz[1][1] = cosYaw;
+    // Rz[1][2] = 0;   
+    // Rz[2][0] = 0;
+    // Rz[2][1] = 0;
+    // Rz[2][2] = 1;
 
 
     if (ROT_ORDER == "YXZ"){
         float tempMat[3][3];
-        matrixMult3x3(Ry, Rx, tempMat);
-        matrixMult3x3(tempMat, Rz, rotationMatrix);
+        matrixMult3x3(RyT, RxT, tempMat);
+        matrixMult3x3(tempMat, RzT, rotationMatrix);
 
     }
-    else{ // Default order is ZYX
-        rotationMatrix[0][0] = cosPitch * cosYaw;
-        rotationMatrix[0][1] = -cosRoll * sinYaw + sinRoll * sinPitch * cosYaw;
-        rotationMatrix[0][2] = sinRoll  * sinYaw + cosRoll * sinPitch * cosYaw;
-        rotationMatrix[1][0] = cosPitch * sinYaw;
-        rotationMatrix[1][1] = cosRoll  * cosYaw + sinRoll * sinPitch * sinYaw;
-        rotationMatrix[1][2] = -sinRoll * cosYaw + cosRoll * sinPitch * sinYaw;
-        rotationMatrix[2][0] = -sinPitch;
-        rotationMatrix[2][1] = sinRoll * cosPitch;
-        rotationMatrix[2][2] = cosRoll * cosPitch;
+    else if(ROT_ORDER == "XYZ"){
+        float tempMat[3][3];
+        matrixMult3x3(RxT, RyT, tempMat);
+        matrixMult3x3(tempMat, RzT, rotationMatrix);
+    }
+    else{// The number of orders can be added here if needed.
+    
     }
 
     return true;
@@ -188,28 +231,28 @@ bool VirtualIMU::calculateAngularVelocity(float angVel[3]){
 
     // Get the last two tracking points.
     TrackingPoint point_t0, point_t1;
-    point_t0 = trackingQ[0];
+    // point_t0 = trackingQ[0];
     point_t1 = trackingQ[1];
 
-    // Calculate the time delta and turn the into seconds.
-    float deltaT = (float) (point_t1.timestamp - point_t0.timestamp)/1000000;
+    // // Calculate the time delta and turn the into seconds.
+    // float deltaT = (float) (point_t1.timestamp - point_t0.timestamp)/1000000;
 
-    // Calculate the difference in angles
-    float euler_delta[3];
+    // // Calculate the difference in angles
+    // float euler_delta[3];
     // euler_delta[0] = (point_t1.rotX - point_t0.rotX)/ deltaT;
     // euler_delta[1] = (point_t1.rotY - point_t0.rotY)/ deltaT;
     // euler_delta[2] = (point_t1.rotZ - point_t0.rotZ)/ deltaT;
 
-    euler_delta[0] = (-point_t1.rotX + point_t0.rotX)/ deltaT;
-    euler_delta[1] = (-point_t1.rotY + point_t0.rotY)/ deltaT;
-    euler_delta[2] = (-point_t1.rotZ + point_t0.rotZ)/ deltaT;
+    // euler_delta[0] = (-point_t1.rotX + point_t0.rotX)/ deltaT;
+    // euler_delta[1] = (-point_t1.rotY + point_t0.rotY)/ deltaT;
+    // euler_delta[2] = (-point_t1.rotZ + point_t0.rotZ)/ deltaT;
 
 
     // Calculate necessary components. (roll, pitch, yaw; rotX, rotY, rotZ; theta, phi, psi)
-    float sinTheta = sin((360-point_t1.rotX)*DEG2RAD);
-    float sinPsi = sin((360-point_t1.rotZ)*DEG2RAD);
-    float cosTheta = cos((360-point_t1.rotX)*DEG2RAD);
-    float cosPsi = cos((360 - point_t1.rotZ)*DEG2RAD);
+    // float sinTheta = sin((360-point_t1.rotX)*DEG2RAD);
+    // float sinPsi = sin((360-point_t1.rotZ)*DEG2RAD);
+    // float cosTheta = cos((360-point_t1.rotX)*DEG2RAD);
+    // float cosPsi = cos((360 - point_t1.rotZ)*DEG2RAD);
 
     // Check if a 360 mark has been surpassed. 
     // if(angVel_tmp[0] > MAX_ABS_ANG_VEL){angVel_tmp[0] -= 360;}
@@ -234,29 +277,19 @@ bool VirtualIMU::calculateAngularVelocity(float angVel[3]){
 
 void VirtualIMU::calculateAccelerometerValues(float acceleration[3], float accelerometer[3]){
 
-    // Rotate the linear acceleration values to the body frame of the sensor to get actual accelerometer values.
-    for(int i = 0; i < 3; i++){
-        for(int j= 0; j < 3; j++){
-            accelerometer[i] += rotationMatrix[i][j] * acceleration[j];
-        }
-    }
+    // Obtain acceleration in the body frame.
+    matrixVectorMult3x3(rotationMatrix, acceleration, accelerometer);
 
     float gravity[3] = {0.0, 0.0, 1}; // (0g, 0g, 1g) This is the output of the a
     float bodyGravity[3] = {0.0, 0.0, 0.0};
 
-    // Add gravity vector to the accelerometer values.
-    // Rotate gravity vector to the body frame
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            bodyGravity[i] += rotationMatrix[i][j] * gravity[j];
-        }
-    }
+    // Obtain gravity vector to the body frame.
+    matrixVectorMult3x3(rotationMatrix, gravity, bodyGravity);
 
     // Add the gravity vector to the accelerometer output.
     accelerometer[0] += bodyGravity[0];
     accelerometer[1] += bodyGravity[1];
     accelerometer[2] += bodyGravity[2];
-
 
 }
 

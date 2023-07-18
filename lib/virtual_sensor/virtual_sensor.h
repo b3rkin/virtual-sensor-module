@@ -20,6 +20,7 @@ struct TrackingPoint
     float pX, pY, pZ;
     float rotX, rotY, rotZ;
     float angvX, angvY, angvZ;
+    float velX, velY, velZ;
     unsigned int timestamp;
 
 };

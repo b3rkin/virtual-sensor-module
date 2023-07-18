@@ -12,6 +12,9 @@
 #define BUFFER_SIZE 1024
 #define DESTINATION_IP "127.0.0.1" // IP Address of the destination.
 
+
+
+
 int main() {
 
     // Create a UDP socket
@@ -52,6 +55,7 @@ int main() {
     SensorOutput outputSensorData;
     VirtualIMU IMU;
 
+
     while (true) {
 
         // Receive UDP packet
@@ -80,12 +84,16 @@ int main() {
         std::cout << "pX: " << point.pX << std::endl;
         std::cout << "pY: " << point.pY << std::endl;
         std::cout << "pZ: " << point.pZ << std::endl;
-        std::cout << "Timestamp: " << point.timestamp << std::endl;
-        std::cout << "deltaTime: " << samplePeriod << std::endl;
-
         std::cout << "angVX: " << point.angvX << std::endl;
         std::cout << "angVY: " << point.angvY << std::endl;
         std::cout << "angVZ: " << point.angvZ << std::endl;
+        std::cout << "velX: " << point.velX << std::endl;
+        std::cout << "velY: " << point.velY << std::endl;
+        std::cout << "velZ: " << point.velZ << std::endl;
+        std::cout << "Timestamp: " << point.timestamp << std::endl;
+        std::cout << "deltaTime: " << samplePeriod << std::endl;
+        std::cout << std::endl;
+
         // Sensor processing Starts here:
         // Step 1: Insert new tracking point into the virtual sensor.
         IMU.sampleObjectData(point);
