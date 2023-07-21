@@ -13,8 +13,6 @@
 #define DESTINATION_IP "127.0.0.1" // IP Address of the destination.
 
 
-
-
 int main() {
 
     // Create a UDP socket
@@ -69,13 +67,19 @@ int main() {
         // Parse the received message
         std::memcpy(&point, receiveBuffer, sizeof(TrackingPoint));
 
-        // std::cout<<sizeof(TrackingPoint)<<std::endl;
 
 
         // Calculate sample period. ()
         float samplePeriod = (float)(point.timestamp - lastTimeStamp)/(float)1000000;
         lastTimeStamp = point.timestamp;
 
+
+        if(point.timestamp==0){//This can only happen when in csv mode and it signals the recording has finished.
+            outputSensorData.timestamp = 0; 
+            break;
+        } else if(samplePeriod>1||samplePeriod<0){
+            continue;
+        }
         // Perform calculations with the data
         std::cout << "Received UDP packet:" << std::endl;
         std::cout << "rotX: " << point.rotX << std::endl;
@@ -92,7 +96,7 @@ int main() {
         std::cout << "velZ: " << point.velZ << std::endl;
         std::cout << "Timestamp: " << point.timestamp << std::endl;
         std::cout << "deltaTime: " << samplePeriod << std::endl;
-        std::cout << std::endl;
+        std::cout << std::endl; 
 
         // Sensor processing Starts here:
         // Step 1: Insert new tracking point into the virtual sensor.
@@ -117,8 +121,17 @@ int main() {
         if (sendBytes < 0) {
             std::cerr << "Failed to send packet." << std::endl;
         }
+
+
     }
 
+    // In case the recording finished send the last sensor data and exit the program.
+    std::memcpy(sendBuffer, &outputSensorData, sizeof(outputSensorData));
+
+    ssize_t sendBytes = sendto(sock, sendBuffer, sizeof(sendBuffer), 0, (struct sockaddr*)&destination, sizeof(destination));
+    if (sendBytes < 0) {
+        std::cerr << "Failed to send packet." << std::endl;
+    }
 
     return 0;
 }

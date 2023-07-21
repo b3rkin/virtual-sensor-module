@@ -42,7 +42,6 @@ bool VirtualIMU::calculateSensorData(){
     float angVel[3] = {0,0,0};
     if(!calculateAngularVelocity(angVel)){return false;}
 
-
     // Step 2: Update the rotation matrix to be able to get rotation. (With the orientation at tracking point 2.)
     if(!updateRotationMatrix()){return false;}
 
@@ -56,13 +55,40 @@ bool VirtualIMU::calculateSensorData(){
 
     // Step 5: Insert calculated sensor data into the sensor data FIFO.
     SensorOutput sensorData;
-    sensorData.accX = accelerometer[0];
-    sensorData.accY = accelerometer[1];
-    sensorData.accZ = accelerometer[2];
-    sensorData.gyroX = angVel[0];
-    sensorData.gyroY = angVel[1];
-    sensorData.gyroZ = angVel[2];
-    sensorData.timestamp = (trackingQ[0].timestamp + trackingQ[1].timestamp)/2;
+    // sensorData.accX = accelerometer[0];
+    // sensorData.accY = accelerometer[1];
+    // sensorData.accZ = accelerometer[2];
+    // sensorData.gyroX = angVel[0];
+    // sensorData.gyroY = angVel[1];
+    // sensorData.gyroZ = angVel[2];
+    sensorData.accX = accelerometer[0] + addWhiteNoise(WHITE_NOISE_INT_ACC);
+    sensorData.accY = accelerometer[1] + addWhiteNoise(WHITE_NOISE_INT_ACC);
+    sensorData.accZ = accelerometer[2] + addWhiteNoise(WHITE_NOISE_INT_ACC);
+    sensorData.gyroX = angVel[0]+ addWhiteNoise(WHITE_NOISE_INT_GYRO);
+    sensorData.gyroY = angVel[1]+ addWhiteNoise(WHITE_NOISE_INT_GYRO);
+    sensorData.gyroZ = angVel[2]+ addWhiteNoise(WHITE_NOISE_INT_GYRO);
+    if (trackingQ[0].timestamp - depthCameraCounter > (1/DEPTH_CAMERA_FREQ)*1000000){
+        depthCameraCounter = trackingQ[0].timestamp;
+        sensorData.depthFlag = true;
+        sensorData.pX    = trackingQ[0].pX;
+        sensorData.pY    = trackingQ[0].pY;
+        sensorData.pZ    = trackingQ[0].pZ;
+        sensorData.rotX  = trackingQ[0].rotX;
+        sensorData.rotY  = trackingQ[0].rotY;
+        sensorData.rotZ  = trackingQ[0].rotZ;
+    }
+    else{
+        sensorData.depthFlag = false;
+        sensorData.pX    = 0;
+        sensorData.pY    = 0;
+        sensorData.pZ    = 0;
+        sensorData.rotX  = 0;
+        sensorData.rotY  = 0;
+        sensorData.rotZ  = 0;
+    }
+
+    // sensorData.timestamp = (trackingQ[0].timestamp + trackingQ[1].timestamp)/2;
+    sensorData.timestamp = trackingQ[1].timestamp;
     sensorQ.push_back(sensorData);
 
     // Step 6: Remove the oldest tracking point for new calculations.
@@ -98,22 +124,14 @@ bool VirtualIMU::calculateLinearAcceleration(float acceleration[3]){
     // velocity2[1] = (point_t2.pY - point_t1.pY) / deltaT2;
     // velocity2[2] = (point_t2.pZ - point_t1.pZ) / deltaT2;
 
-
-    // std::cout<< velocity1[0]<<std::endl;
-    // std::cout<< velocity2[0]<<std::endl;
-
-
     // Calculate the linear acceleration.
     // acceleration[0] = (velocity2[0] - velocity1[0]) / newDeltaT;
     // acceleration[1] = (velocity2[1] - velocity1[1]) / newDeltaT;
     // acceleration[2] = (velocity2[2] - velocity1[2]) / newDeltaT;    
 
-    acceleration[0] = (point_t1.velX - point_t0.velX ) / newDeltaT;
-    acceleration[1] = (point_t1.velY - point_t0.velY ) / newDeltaT;
-    acceleration[2] = (point_t1.velZ - point_t0.velZ ) / newDeltaT;   
-
-    // std::cout<< acceleration[0] <<std::endl;
-    // std::cout<< newDeltaT <<std::endl;
+    acceleration[0] = (point_t1.velX - point_t0.velX ) / deltaT1;
+    acceleration[1] = (point_t1.velY - point_t0.velY ) / deltaT1;
+    acceleration[2] = (point_t1.velZ - point_t0.velZ ) / deltaT1;   
 
     acceleration[0] /= GRAVITY;
     acceleration[1] /= GRAVITY;
@@ -267,9 +285,9 @@ bool VirtualIMU::calculateAngularVelocity(float angVel[3]){
     // angVel[1] = euler_delta[1]*sinTheta*cosPsi - euler_delta[0]*sinPsi;
     // angVel[2] = euler_delta[1]*cosTheta + euler_delta[2];
 
-    angVel[0] = -point_t1.angvX*RAD2DEG;
-    angVel[1] = -point_t1.angvY*RAD2DEG;
-    angVel[2] = -point_t1.angvZ*RAD2DEG;
+    angVel[0] = point_t1.angvX*RAD2DEG;
+    angVel[1] = point_t1.angvY*RAD2DEG;
+    angVel[2] = point_t1.angvZ*RAD2DEG;
 
     return true;
 }
@@ -279,6 +297,7 @@ void VirtualIMU::calculateAccelerometerValues(float acceleration[3], float accel
 
     // Obtain acceleration in the body frame.
     matrixVectorMult3x3(rotationMatrix, acceleration, accelerometer);
+    std::cout<<std::endl;
 
     float gravity[3] = {0.0, 0.0, 1}; // (0g, 0g, 1g) This is the output of the a
     float bodyGravity[3] = {0.0, 0.0, 0.0};
